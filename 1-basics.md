@@ -37,6 +37,7 @@ The components are listed below:
 ## Software
 
 **What is an Operating System?** 
+
 It is a collection of system programs that which allow the user to run application software.
 Operating system abstracts the real hardware system and presents the user and the applications a
 virtual machine.
@@ -45,20 +46,24 @@ OS has various components and in the case of Linux there is the Kernel, Librarie
 make it possible for the user to interact with the OS. 
 
 **Memory Management** 
+
 In order to manage memory better and optimize how the processes get the scarce resource the kernel
 divides the memory into easily handled pages and swaps these pages onto hard disk as system runs. 
 
 **Processes** 
+
 Process is a program in action. In order to manage the CPU time well kernel uses a technique called
 time slicing where each process is given some time slices to do their tasks and are stopped after
 the alloted time so that they do not hog all the CPU time. 
 
 **Device Drivers** 
+
 Device drivers are important pieces of software that operate in a previledged environment and can
 cause problems if things go wrong. The device drivers control the interaction between the OS and the
 device they control. 
 
 **File System** 
+
 A file system is a unified way in which the files and folders can be accessed. There are various
 types of file systems that Linux supports and all of them can be accessed using the same interface.
 Linux OS allows for different types of file systems to be mounted at different mount points
