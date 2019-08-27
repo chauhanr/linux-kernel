@@ -220,3 +220,88 @@ be performed on the virtual memory area.
 
 ![mm-struct](images/mm-struct.png)
 
+
+## 6 Demand Paging 
+
+Demand paging is nothing but the search for a virtual memory page that is not found in physical
+memory. The Linux system will look for vm_area_struct which is the page that was not found. The
+search for the vm_area_struct is a done on an AVL tree which holds all the virtual machine pages for
+quick search and access. 
+* If no pages for the faulting virtal machine page address is found Linux marks it as an illegal
+  memory operation and kills the process. 
+
+Next Linux checks for the kind of access that has been reuqested for the page. if the access to the
+page is different from what is allowed then again an error is emitted and the process is terminated. 
+
+Once Linux has determined that the request for the page request is legal and all access related
+issues are in place it will look for page in the swap area of the memory just to see if it is in the
+cache. 
+
+Finally the page is brought into the physical memory and the linux page tables structures are
+updated with the physical address where the page was copied. This marks the end of the page fault
+operation and the regular processing of the process can continue. 
+
+
+## 7 Linux Page Cache 
+
+Once the memory mapped files are in operations the pages form the files are loaded into physical
+memory as and when the request for the pages come in. The role of the page cache is to speed up the
+access of the file on disk. The data stucture that froms the page cache is called the
+page_hash_table, which is nothing but a vector of pointers to mem_map_t structures. 
+
+![page-cache](images/page-cache.png)
+
+When the page fault occurs during the demand paging process Linux will look into the page cache
+before looking for it on the disk. 
+
+Another thing that Linux does with image files is that when files are being read sequentially it
+will bring the next page on the file into the page cache as well in anticipation that the user may
+need it. 
+
+Over time the page cache grows and eventually will need to get pruned by the OS. Again the LRU
+algorithm is the one that is used to get rid of the least recently used files. 
+
+
+## 8 Swapping Out and Discarding Pages 
+
+The kernel swap daemon (kswapd) is a process that runs periodically and looks at the free memory
+space in the Linux kernel and tries to free the physical memory pages in order to create space for
+other pages that need the space. 
+
+The kswapd process is a kernel thread/process that runs in the kernel mode and in the physical
+address space. It looks at two configurations free_pages_high and free_pages_low values and based on
+the free pages in the kernel address space will try and swap out or discard pages to fit in new
+pages. 
+
+The strategies that the kswapd applies are: 
+* reduce the size of the buffer and page caches - this is the first strategy the kswapd applies it
+  looks a page cache and buffer caches and analyses the pages that are linked together and can be
+  removed together. Once the pages that can be removed are determined the kswapd will remove them
+  from the physical memory too. page and buffer caches are also updated. 
+* swapping system v shared memory pages. - The system v shared memory is an area that is used for
+  inter process communication between the processes in the system. kswapd can analyse the system v
+  shared memory area and get rid of pages that are used here to increase the free page count. 
+* swapping and discarding physical memory pages - This is the final strategy and this is where
+  kswapd determines the pages that are good candidate pages to swap to the swap area in the OS. The
+  swap candidates are removed from physical memory and placed into swap area only if there is no
+  other way of retrieving this page. 
+
+
+## 9 Swap Cache 
+
+When swapping pages to swap files, Linux avoids writing pages if it does not have to. There are
+time, however, when pages are both in physical memory as well as in swap file. This is the case
+where the page that was swapped out and placed in swap file is recalled to physical memory because a
+process tried to access it. So long as the page in the physical memory is not written to, copy in
+the swap file remains valid. 
+
+Linux uses the swap cache to manage such pages. If however the physical page updated then the pages
+in swap cache as well as the swap file are marked as invalid and need to be removed. 
+
+When Linux needs to swap a physical page out to a swap file it consults the swap cache and, if there
+is a valid entry in the swap cache there is no need to write to the swap file. 
+
+The Swap cache is a page table entry that contains information on the memory location where the swap
+page is kept in swap file so it can help get to the swap page faster too. 
+
+
