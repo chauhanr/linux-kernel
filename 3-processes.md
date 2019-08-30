@@ -115,4 +115,77 @@ The scheduler runs the following steps each time it runs:
 
 ### 3.1 Scheduling in multiprocess systems 
 
+In the case of a multiple CPU system the processing done by the scheduler is slightly different. In
+the single processor system the scheduler has a single task queue and the scheduler picks up the
+tasks from this queue. However in the case of multi processor system the scheduler will have more
+than one task queues and each task queue will have an idel process and a current process per CPU.
+The `task_struct` has a filed that denotes the processor on which it is either running or ran
+previously. The scheduler can choose a different processor for a task each time but it will try to
+keep the task assigned to the same processor to avoid the performance overhead of moving tasks
+across processors each time. 
+
+
+## 4. Files 
+
+![process-files](images/process-files.png) 
+
+The `task_struct` data structures stores references of the files that it needs to work with. There
+are two data structures that are needed to be kept and are shown in the diagram above. 
+
+* fs_struct - this structure holds the pointes to the process's VFS inodes and its umask. this is
+  the default mode in which the file is created. 
+* files_struct - this holds the information about all the files that the process is currently using.
+  Generally the this structure by default will have atleast 3 entries the standard input, output as
+  well as standard error. There are several attributes that the files_struct has: 
+  	* f_mode - mode in which the file has been created r, w or rw mode. 
+	* f_pos - position in the file where the next read has to take place. 
+	* f_inode - this is the reference to the inode that represents the file. This with the f_pos
+	  will determine exactly in memory the next read will happen. 
+	* f_op - is a list of all operation routines that can be performed on the file. 
+
+When the file is opened in Linux an entry into the files_struct takes place and the 2 file
+descriptors to the standard input, output and error are added to the first 3 indices of files_struct
+structure 0, 1, and 2 respectively. These values are generally copied from the parent process that
+was used to fork to create the current process. 
+
+## 5. Virtual Memory 
+
+The virtual memory that the process has contains the following types of code and data. 
+1. program images (code) and data from the main program that needs to run and for which the process
+   has been created. e.g. ls command along with the parameters. 
+2. process also allocates memory in addition to the virtual memory in point 1 because there are
+   intermediate results and work that the process needs to do which require memory for processing.
+   This memory needs to be linked to the process virtual memory created in point 1 so that the
+   process has access to read and write to this memory. 
+3. Linux uses a lot of common routines and subroutines (code from libraries) that are very generic.
+   These routines are part of shared library that are not copied as part of all processes instead
+   they are loaded just once and shared with each process. e.g. the read and write functions that
+   are used to read and write to disk. Again the shared library memory (where ever it is) needs to
+   be linked to the program process memory. 
+
+To avoid wasteage of memory the kernel does not load all the programs code and data to the memory
+instead it used a technique of demand paging to keep the process of memory allocation as small as
+possible, 
+
+![vm-struct](images/vm-memory-struct.png)
+
+
+The `task_struct` structure has a reference to the memory that the process uses by the way of
+mm_struct data structure. The memory structure has information of loaded executable image and
+pointers to the process page tables. There us a reference to multiple vm_area_struct, each
+representing an area of virtual memory with this process. 
+
+The vm_area_struct has an attribute vm_ops that is set of common operations that can be performed on
+teh virtual memory e.g. the way in which page faults are handled. This abstraction of vm_ops is
+important as the virtual memory are from various sources. 
+
+The vm_area_struct list is accessed so much that the access speeds of the vm_area_struct is critical
+to performance of the kernel and the process. Therefore the vm_area_struct are also arranged in an
+AVL tree as well which makes the searching of the virtual memory easier to complete. 
+
+When a process allocates a virtual memory, Linux does not assign physical space immediately for the
+process. The vm_area_struct data structure is created and assigned to the linked list. Now when the
+process attempts to read or write to the virtual memory a page fault will occur leading to the the
+physical page being assigned. 
+
 
