@@ -304,4 +304,4 @@ is a valid entry in the swap cache there is no need to write to the swap file.
 The Swap cache is a page table entry that contains information on the memory location where the swap
 page is kept in swap file so it can help get to the swap page faster too. 
 
-
+[Next](3-processes.md)

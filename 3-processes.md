@@ -188,4 +188,62 @@ process. The vm_area_struct data structure is created and assigned to the linked
 process attempts to read or write to the virtual memory a page fault will occur leading to the the
 physical page being assigned. 
 
+## 6. Creating a process 
 
+The init process in the kernel is the first process of the OS and therefore it has the process id of
+1 always. This init process does things like opening system consoles and mounting of the root file
+system. 
+
+When a new process in the system is created by cloning the current process. A new task is created by
+the system call (fork/clone) and this cloning happens in the kernel mode. Once the process is
+created a new process id is set to it and a corresponding `task_struct` structure is created.
+The `task_struct` is added to the task vector at the same time the some contents of previous
+processes `task_struct` are copied to the new one.
+
+After cloning the processes Linux allows the two processes to share resources rather than have two
+complete separate copies in memory because that may be to expensive. Therefore the new process will
+have a refernece to the mm_struct of the earlier process and count fields that indicates that the
+memory is being shared for a process. 
+
+The kernel uses a technique of 'copy on write' where processes will share data until a page is
+written into and at that time the page is copied before the changes are made. the kernel keeps track
+of the all the pages that have changed and which process needs to be presented with the new page.
+This is applicable for the vm_area_struct structure. 
+
+
+## 7. Times and Timers 
+
+The kernel keeps track of process's creation time as well as the CPU time that it consumes during
+its lifetime. Each time a clock ticks, the kernel updates the amount of time the current processes
+has spent in the system and in user mode (time is kept in jiffies). 
+
+Linux supports timers that can be used by processes to be notified when the timer expires. There are
+3 tyes of timers: 
+
+1. Real - this tracks real time and when the timer expires the process receives a SIGALARM signal. 
+2. Virtual - this timer only runs when the process is running and will raise the SIGVTALRM signal. 
+3. Profile - This ticks both when the process is running in the system and user modes. SGIPROF is
+   the signal raised when the timer expires. 
+
+
+## 8. Executing Programs 
+
+In Linux/Unix systems programs and commands are normally executed by a command interpreter. The
+command interpreter is like just another process and is called a shell. There are several shells in
+Linux example bash, tsh, sh etc. Generally a command or program is an executable binary file. Here
+is what the shell does: 
+
+* first the shell searches for the binary executable for the command in the search path (PATH
+  variable). 
+* If the file is found then it is loaded and executed else command errors out. 
+* The shell will clone itself using the fork mechanism. The shell will allow the new image just
+  found to replace itself in the memory.
+* Once the new commands processing is done or ends the shell comes to the foreground. 
+* There are ways in which you can push the command, that you need to run, to the background and
+  allows the shell to keep working as is. 
+
+An executable can be in a number of formats or even scripts. The most commanly used format for
+executable binary is ELF but Linux can work with any object file format.
+
+
+[Next](4-ipc.md) 

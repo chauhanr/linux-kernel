@@ -72,4 +72,4 @@ Linux OS allows for different types of file systems to be mounted at different m
 This way of handling file system allows users not to worry about the file system that the file is
 in. The user just needs to know how to use the file. 
 
-
+[Next](2-memory-management.md)
