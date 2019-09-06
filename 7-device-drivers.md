@@ -77,3 +77,148 @@ Linux tracks the DMA channels using the dma_chan data structure. This has two fi
 
 
 ## 3. Memory 
+
+Because the device drivers are part of the kernel they do not have access to the virtual memory and
+therefore all the data and structure they such are in the physical memory. Linux provides the
+allocation and de-allocation routines for memory and they are the ones used by the device drivers to
+do the memory management they need. 
+
+Linux allocates the kernel memory in chunks of 128, 512 or 1024 bytes and even if the memory
+requirement may lie in between the allocation is done in discrete values. If the free memory is low
+there may be a need to discard the page or swap it out. In the case of low memory 2 things can
+happen: 
+
+1. The Kernel will put the process into wait queue until enough memory is present in the system. 
+2. The kernel may fail the process that is requesting memory because the process may not want to
+   wait for the memory to be free and fail fast. 
+
+The device drivers can also specify to the kernel that they require DMA access. Therefore the
+process is marked as DMAable and this abstracts from the device drive process how DMA is done. 
+
+
+## 4. Interfacing Device Drivers with the Kernel. 
+
+The idea behind the common interface for all the different kind of device drivers is to have the
+diverse devices behave the same way to the kernel. this allows the kernel code to be simple leaving
+the complexity of the implementation to the driver level. e.g. IDE and the SCSI are two different
+devices but the Kernel behaves in the same way towards them both. 
+
+Linux kernel provides two ways in which the device drivers can be included into the kernel. 
+
+1. The device drivers are included as part of the kernel code and are registered with teh kernel at
+   boot time using the configuration scripts. At boot time the kernel will look for these device
+   drivers when they encounter a device for them. 
+2. The device drivers can also be loaded in th kernel at the time when the kernel discovers a device
+   for which the module is needed. 
+
+Linux keeps a list of all the device driver modules and codes in a data structure which includes
+pointers to the initialization routines, configurations as well as info about the class of the
+driver. 
+
+### 4.1 Character Devices 
+
+Character devices are accessed as files. Applications use standard system calls to read, write and
+close the files. As a character device is registers itself with the Linux kernel by adding an entry
+into the chrdevs vector which points to device_struct data structure. 
+
+Each device special file is represented as a VFS inode. The VFS inode has the information needed by
+the kernel to interact with the device. Also the inode plugs right into the file system that is used
+for a partition. 
+
+Each VFS inode is associated with it a set of file operations and these are different depending on
+the file system object that the inode represents. 
+
+
+### 4.2 Block devices 
+
+Block devices also support being accessed as files. The data structure for block device are given in
+the diagram below: 
+
+![blk-dv](images/blk-device.md) 
+
+The block device data structure is similar in structure to the character based devices but block
+devices are classified into types e.g. SCSI and IDE belong to two different device types. It is the
+class of the device that registers with the Kernel and then decides the operations taht the driver
+will provide. 
+
+Every block device must provide an interface to the buffer cache as well as the normal file system
+operations interface as well. The blk_dev_struct is the data stucture that represents a block device
+and is indexed based on the major verison. The blk_dev_struct has the following information: 
+1. pointer to the request routines that can be used. 
+2. pointer to the list of request data structures. 
+
+The entry into the request linked list is an operation on the block device that needs to be
+performed i.e. either data needs to be read or written to the block device. All operations are
+performed via the buffered cache that holds the cache value of the data that we are seeking. 
+
+Each time a buffer cache wishes to read or write to the block device it adds a request object to the
+blk_dev_struct. Each blk_dev_struct pionts to the buffer_head data structure which is the one that
+actually allows for the operations (read or write). 
+
+Once the device driver has completed the request it is removed from buffer head. The unlocking of
+the buffer_head wakes up other processes that have been waiting for this operations. 
+
+## 5. Network Devices 
+
+A network device on Linux is an entity that sends and receives packets of data. This is generally a
+physical device like the ethernet card. Some devices like loopback are network devices defined in
+software. Each network device is represented by a device data structure. 
+
+The information of the network device are stored in device data structure. The device struct holds
+inforamtion of the device as well as pointers to the functions that allow the use of network
+protocols to use with the device. 
+
+All network data (packets) are transmitted using the sk_buff struct which is a flexible structure
+that allows for network headers to be easily added and removed. The device data structure contains
+the following information: 
+
+* Name - unlike character and block devices that can be created using mknod command, the network
+  devices appear dynmaically when the device is dicovered and made operational. The devices can be
+  like: 
+  	* /dev/ethN - ethernet device 
+	* /dev/slN - SLIP device 
+	* /dev/pppN - PPP device 
+	* /dev/lo - loopback devices. 
+
+* Bus information - this have irq number, base address and DMA channel number that network device is
+  using. 
+
+* Interface Flags - 
+	* IFF_UP - is the device up and running. 
+	* IFF_BROADCAST - broad cast address in device is valid. 
+	* IFF_DEBUG - device debugging turned on. 
+	* IFF_LOOPBACK - this is a loop back device. 
+	* IFF_MULTICAST - multi cast address. 
+
+* Protocol Information - 
+	* mtu - this is the size of largest packect that the network can transmit not including the
+	  link layer headers. This value is used by the protocol layer (IP) to decide the size of
+	  the packet to send. 
+	* Family - this signifies the protocol family that the device supports. All Linux network
+	  devices are of the AF_INET family. 
+	* Type - This signifies the hardware device interface that the device is attached too. The
+	  supported devices are X.25, token ring, slip, PPP and Apple Localtalk. 
+	* Address - The device data structure holds the address (IP) that are relevant to it
+	  including its own. 
+
+* Packet Queue - this is the queue of sk_buff packets that are queued on the device which need to be
+  transmitted. 
+
+### 5.1 Initializing the Network devices 
+
+There are two problems to be solved for network device driver initialization: 
+
+1. Not all network drivers will have have devices to control because these devices may not be
+   attached to the device at all. This problem is solved by having the device driver return a value
+   indicating whether the device was found or not. If the answer is no then device driver reference
+   form the device data structure is removed. 
+2. The devices have to be named /dev/ethN no matter what device driver is present. There are eigth
+   device standard entries into the device list; eth0 .. eth7 and the initialization routine is the
+   same for them all. The routine will try each device driver and see if it fits the device on the
+   ethN. If it does then the ethN is marked as taken and a relevant driver is assigned. If all ethN
+   are taken the initialization routine stops. Therefore could be a situation that only one or two
+   of the device drivers may be taken out of the possible 8. 
+
+[Next](8-file-system.md)
+
+
