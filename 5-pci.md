@@ -37,7 +37,7 @@ device.
 The location of the configuration header in the address space depends on which slot on the PC
 motherboard. The configuration header for PCI is shown in the diagram below: 
 
-![pci-header](images/pci-header-conf.png) 
+![pci-header](images/pic-header-conf.png) 
 
 The following are the fields in the PCI header (256) 
 * vendor id - this identifier describes the originator of the PCI device. e.g. for intel the device

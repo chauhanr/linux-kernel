@@ -128,7 +128,7 @@ written to the physical file system.
 
 ## 2. Virtual File System (VFS) 
 
-![vfs](images/vfs-struct.png) 
+![vfs](images/vsf-struct.png) 
 
 VFS has been generated as a general abstraction for all the file system that Linux supports. The
 data structure of VFS is the same as the ext2 file system is general. VFS too has superblock and

@@ -28,7 +28,7 @@ run is the interrupt handler assigned to the signal (custom or default).
 
 ## 2. Pipes 
 
-![pipes-ds](imagesi/pipe-ds.png) 
+![pipes-ds](images/pipe-ds.png) 
 
 Pipes are a mechanism which the kernel can pass standard output of one process to the standard input
 of another process. 
@@ -139,4 +139,4 @@ page and is unable to get it will get a page fault which is handled and the phys
 fault is assigned to the shared memory. Next time the same page is accessed by another process will
 not have to load the page from disk but can get it in shared memory itself. 
 
-
+[Next](5-pci.md)

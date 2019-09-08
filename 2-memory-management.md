@@ -218,7 +218,7 @@ the image that is currently executing and has a link to the vm_area_struct data 
 reference to the start and end address of the virtual memory and also the set of operations that can
 be performed on the virtual memory area. 
 
-![mm-struct](images/mm-struct.png)
+![mm-struct](images/mm_struct.png)
 
 
 ## 6 Demand Paging 

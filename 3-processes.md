@@ -167,7 +167,7 @@ To avoid wasteage of memory the kernel does not load all the programs code and d
 instead it used a technique of demand paging to keep the process of memory allocation as small as
 possible, 
 
-![vm-struct](images/vm-memory-struct.png)
+![vm-struct](images/vm-memory-sruct.png)
 
 
 The `task_struct` structure has a reference to the memory that the process uses by the way of

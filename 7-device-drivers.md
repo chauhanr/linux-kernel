@@ -134,7 +134,7 @@ the file system object that the inode represents.
 Block devices also support being accessed as files. The data structure for block device are given in
 the diagram below: 
 
-![blk-dv](images/blk-device.md) 
+![blk-dv](images/blk-device.png) 
 
 The block device data structure is similar in structure to the character based devices but block
 devices are classified into types e.g. SCSI and IDE belong to two different device types. It is the
